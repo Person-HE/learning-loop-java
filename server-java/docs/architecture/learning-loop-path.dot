@@ -1,0 +1,31 @@
+// 端到端业务主路径：一次「学习闭环」（当前态，全部步骤有代码+运行时双重证据）
+// system-modeler 产出候选路径；如需更细的调用时序请路由 flow-visualizer
+digraph learningloop {
+  rankdir=TB;
+  fontname="Microsoft YaHei";
+  node [fontname="Microsoft YaHei", fontsize=10, style=filled, shape=box, color="#555555"];
+  edge [fontname="Microsoft YaHei", fontsize=9];
+
+  open [label="学习者打开今日任务", fillcolor="#ffe9b3", shape=oval];
+  rollover [label="任何 /api 请求先过拦截器\nensureToday()：跨天归档昨日会话、\nmissedDays/冻结检查", fillcolor="#e8e8e8"];
+  build [label="POST /api/queue/build\nQueueBuilder 组装今日队列（优先级）：\n① 同题复答(<80且到期) ② 到期复习(项目优先)\n③ 新知识点(最大余数法按权重) ④ 缺口补测", fillcolor="#cfe3f7"];
+  prepare [label="POST /api/queue/prepare\n并行线程逐题 AI 出题（生成锁内）\n失败写 genError 不阻塞他题", fillcolor="#e6dcf5"];
+  answer [label="学习者作答（文本/代码/口述）", fillcolor="#ffe9b3", shape=oval];
+  score [label="POST /api/answer/score\nGradingService：取题(队列→genSession→LC合成→gapTest)\n→ KbPrompts/LcPrompts → chatJson(temp0.3)\n→ snake_case 结果规范化(要点/对比/改写/建议)", fillcolor="#e6dcf5"];
+  apply [label="AnswerApplier.apply（learning 层纯逻辑）\nSM-2 修订间隔/难度 + FSRS R=e^(-Δt/S)\n写 AnswerRecord / 更新 Kp 状态 / 记缺口", fillcolor="#cde5d5"];
+  persist [label="StateManager.mutate → StateRepository\nstate.json tmp+原子rename 落盘", fillcolor="#f7e6c4"];
+  gap [label="出现 <60 分缺口？", shape=diamond, fillcolor="#fff3cd"];
+  gapflow [label="GET /api/gaps 列出\nPOST /api/gaps/{id}/test AI 出补测题\n达标(≥75) resolve 关闭缺口", fillcolor="#d6e9f8"];
+  curve [label="记忆曲线可视化\nGET /api/curve /curve/summary（可检索度 R、到期列表）", fillcolor="#d6e8d0"];
+  nextday [label="明日到期 → 回到队列组装（SM-2 due）", shape=oval, fillcolor="#ffe9b3"];
+
+  project [label="另一条主路径：项目面试闭环\nPOST /api/projects/questions → /score\n/mock/start→/mock/turn×N→/mock/end", fillcolor="#dfe9f5", style="filled,dashed"];
+
+  open -> rollover -> build -> prepare -> answer -> score -> apply -> persist -> gap;
+  gap -> gapflow [label="是", color="#c62828"];
+  gapflow -> persist [label="缺口状态回写"];
+  gap -> curve [label="否"];
+  curve -> nextday;
+  nextday -> build [label="循环", style=dashed];
+  answer -.-> project [label="同一学习日内的并行能力", style=dashed];
+}

@@ -1,0 +1,81 @@
+server:
+  port: 3002
+
+spring:
+  application:
+    name: learning-loop-server
+  datasource:
+    # 个人本机 MySQL 8.0.44；口令只走环境变量 MYSQL_PASSWORD（见 .env，不进仓库）
+    url: ${MYSQL_URL:jdbc:mysql://127.0.0.1:3306/learning_loop?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true}
+    username: ${MYSQL_USER:ll_app}
+    password: ${MYSQL_PASSWORD:}
+    hikari:
+      maximum-pool-size: 4
+      minimum-idle: 1
+      connection-timeout: 5000
+  mvc:
+    async:
+      request-timeout: 300000
+  servlet:
+    multipart:
+      max-file-size: 4MB
+      max-request-size: 4MB
+
+# MyBatis starter 读取的是顶层 mybatis: 前缀；此前误缩进在 spring: 下，
+# 导致 map-underscore-to-camel-case 从未生效，SELECT * 的多词列（question_id 等）映射为 null。
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    default-fetch-size: 200
+    jdbc-type-for-null: 'null'
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+
+app:
+  # 知识库根目录（只读扫描，生成知识点注册表）；本机路径请用环境变量 APP_KB_ROOT 注入
+  kb-root: ${APP_KB_ROOT:./kb}
+  # 数据目录：state.json / lc100.json / lc-solutions.json / audit/
+  data-dir: ${APP_DATA_DIR:./data}
+  # 简历原始 HTML（/api/projects 附带返回）
+  resume-html: ${APP_RESUME_HTML:./data/resume.html}
+  # React 构建产物目录（生产托管）
+  client-dist: ${APP_CLIENT_DIST:../client/dist}
+  kb-text-limit: 6000
+  storage:
+    # json=只读写 state.json；mysql=主路径 MySQL（state.json 仅导出/备份）
+    mode: ${STORAGE_MODE:mysql}
+  vector:
+    # 企业向量库 Qdrant（向量不进 MySQL）；LangChain4j 客户端用 gRPC 6334
+    qdrant-host: ${QDRANT_HOST:127.0.0.1}
+    qdrant-grpc-port: ${QDRANT_GRPC_PORT:6334}
+    collection: ${QDRANT_COLLECTION:learning_chunks}
+  ai:
+    # 密钥治理：AI_API_KEY 环境变量注入，仓库内不保留任何回退明文
+    base-url: ${AI_BASE_URL:https://api.agnes-ai.cn/v1}
+    api-key: ${AI_API_KEY:}
+    model: ${AI_MODEL:agnes-2.5-flash}
+    # 单次请求超时（秒）与失败重试次数（指数退避），与 Node 版 ai.js 策略一致
+    timeout-seconds: 180
+    max-retries: 3
+    # weekly 专属单次截止：上游网关长尾实测 122.7s（同 prompt 正常 8.9s），60s 倒逼重试
+    weekly-timeout-seconds: ${AI_WEEKLY_TIMEOUT_SECONDS:60}
+    quota:
+      max-calls-per-day: 400
+      max-tokens-per-day: 2000000
+    breaker:
+      failure-threshold: 5
+      open-millis: 60000
+
+logging:
+  level:
+    root: info
+    access: info
+  pattern:
+    console: "%d{HH:mm:ss.SSS} [%thread] %-5level [%X{requestId:-}] %logger{20} - %msg%n"

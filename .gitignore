@@ -1,0 +1,24 @@
+﻿# secrets / local env
+.env
+*.env.local
+server-java/src/main/resources/application-local.yml
+
+# build artifacts
+node_modules/
+dist/
+target/
+.worktrees/
+*.log
+*.tmp
+server-java/e2e-artifacts/
+server/data/audit/
+server/data/state.json.bak*
+
+# 外部模型 / 本地临时产物，体积大且不入库
+server-java/models/
+server-java/tools/
+server-java/e2e2/
+server-java/*.json
+server-java/*.txt
+server-java/*.pid
+state_probe.json

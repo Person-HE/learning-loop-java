@@ -1,0 +1,79 @@
+// 包级依赖图（当前态实测）· system-modeler + graphviz · 2026-09-19
+// 边标签 = 该方向 import com.closeloop.<目标包> 的出现次数（grep 实测于 src/main/java）
+// 实线 = 设计允许的向下依赖；红色虚线 = 三条受控例外 + config→web（须知晓，见 evidence.md E-x 项）
+digraph pkgdeps {
+  rankdir=TB;
+  fontname="Microsoft YaHei";
+  node [fontname="Microsoft YaHei", fontsize=11, style=filled, fillcolor="#f5f5f5", color="#555555"];
+  edge [fontname="Microsoft YaHei", fontsize=9];
+  compound=true;
+
+  // ---- L1 契约层 ----
+  subgraph cluster_l1 {
+    label="L1 契约层（无业务逻辑）"; style=dashed; color="#2f6cb3";
+    web [label="web\n8 Controller + RolloverInterceptor + Req", fillcolor="#cfe3f7"];
+  }
+  // ---- L2 编排层 ----
+  subgraph cluster_l2 {
+    label="L2 业务编排层"; style=dashed; color="#3b8ed0";
+    service [label="service\nQuestion Grading Restate KpPlan Gap Curve\nWeekly Lc StateView ProjectInterview Mock", fillcolor="#d6e9f8"];
+  }
+  // ---- L3 领域内核 ----
+  subgraph cluster_l3 {
+    label="L3 领域机制（纯逻辑，不依赖 web/ai）"; style=dashed; color="#083f5d";
+    learning [label="learning\nSm2 Priority QueueBuilder AnswerApplier Kpi", fillcolor="#cde5d5"];
+  }
+  // ---- L4 支撑层（叶子）----
+  subgraph cluster_l4 {
+    label="L4 支撑层"; style=dashed; color="#6a1b9a";
+    ai [label="ai + ai.prompt\nAiClient JsonExtractor / 模板库", fillcolor="#e6dcf5"];
+    knowledge [label="knowledge\nKbService KbScanner LcDataService", fillcolor="#e2efda"];
+    project [label="project\nResumeData（编译期常量）", fillcolor="#e2efda"];
+    state [label="state\nStateManager StateRepository model/*", fillcolor="#f7e6c4"];
+  }
+  // ---- L0 基础设施 ----
+  subgraph cluster_l0 {
+    label="L0 基础设施（被所有层引用，自身不引用业务包*）"; style=dashed; color="#5b5b5b";
+    config [label="config\nApp Ai Web StaticResource", fillcolor="#e8e8e8"];
+    common [label="common\nUtils Dates ApiException GlobalExceptionHandler", fillcolor="#e8e8e8"];
+  }
+
+  // 实测 import 计数
+  web -> service [label="13"];
+  web -> state   [label="1  ensureToday"];
+  web -> common  [label="1"];
+
+  service -> state    [label="45"];
+  service -> ai       [label="38"];
+  service -> common   [label="27"];
+  service -> knowledge[label="10"];
+  service -> learning [label="8"];
+  service -> config   [label="7"];
+  service -> project  [label="4"];
+
+  learning -> state  [label="15"];
+  learning -> common [label="5"];
+
+  knowledge -> state  [label="4"];
+  knowledge -> config [label="2"];
+
+  state -> knowledge [label="3" color="#c62828" style=dashed fontcolor="#c62828"]; // 例外X2：启动合并
+  state -> common    [label="1"];
+  state -> config    [label="1"];
+
+  ai -> state    [label="6" color="#c62828" style=dashed fontcolor="#c62828"]; // 例外X1：prompt DTO 类型
+  ai -> project  [label="3" color="#c62828" style=dashed fontcolor="#c62828"]; // 例外X1
+  ai -> config   [label="1"];
+  ai -> common   [label="1"];
+  ai -> knowledge [label="1" color="#c62828" style=dashed fontcolor="#c62828"]; // 例外X1
+
+  project -> common [label="1"];
+  config -> web     [label="1" color="#c62828" style=dashed fontcolor="#c62828"]; // 例外X3：拦截器注册
+
+  // 分层完整性：向下依赖全部实线，无 service→web、无 learning→ai 之类的违例边
+  { rank=same; web; }
+  { rank=same; service; }
+  { rank=same; learning; }
+  { rank=same; ai; knowledge; project; state; }
+  { rank=same; config; common; }
+}
