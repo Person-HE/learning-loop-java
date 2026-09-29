@@ -17,13 +17,13 @@ public class VectorStoreConfig {
 
     /**
      * 问题：QdrantEmbeddingStore 走 gRPC，端口是 6334；填 6333(REST) 会报 INTERNAL: http2 exception。
-     * 决策：默认 gRPC 6334；collection 需 dim=768 Cosine（启动前 REST 创建或自动建）。
+     * 决策：默认 gRPC 6334；collection dim=1024（bge-m3）Cosine。
      */
     @Bean
     public EmbeddingStore<TextSegment> embeddingStore(
             @Value("${app.vector.qdrant-host:127.0.0.1}") String host,
             @Value("${app.vector.qdrant-grpc-port:6334}") int port,
-            @Value("${app.vector.collection:learning_chunks}") String collection) {
+            @Value("${app.vector.collection:learning_chunks_bge}") String collection) {
         return QdrantEmbeddingStore.builder()
                 .host(host)
                 .port(port)

@@ -55,7 +55,7 @@ app:
     # 企业向量库 Qdrant（向量不进 MySQL）；LangChain4j 客户端用 gRPC 6334
     qdrant-host: ${QDRANT_HOST:127.0.0.1}
     qdrant-grpc-port: ${QDRANT_GRPC_PORT:6334}
-    collection: ${QDRANT_COLLECTION:learning_chunks}
+    collection: ${QDRANT_COLLECTION:learning_chunks_bge}
   ai:
     # 密钥治理：AI_API_KEY 环境变量注入，仓库内不保留任何回退明文
     base-url: ${AI_BASE_URL:https://api.agnes-ai.cn/v1}

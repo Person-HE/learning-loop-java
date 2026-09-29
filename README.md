@@ -15,7 +15,7 @@
 | 缺口库 | 六类缺口标签，复述答题达标自动消灭 |
 | 力扣 | 题目/题解数据、AI 讲解、变式练习 |
 | 项目面试 | AI 面试官基于简历切面深挖并评分，多轮模拟面试 |
-| RAG | 知识切片入 Qdrant，本地嵌入（Ollama nomic-embed-text / sidecar），`/api/rag/search` |
+| RAG | 知识切片本地嵌入（Ollama bge-m3，1024 维）写入 Qdrant，`/api/rag/search` 向量检索 |
 | 周报 | AI 生成近 7 天学习周报 |
 
 ## 技术栈
@@ -38,7 +38,6 @@
 │   │   ├── infrastructure/       LangChain4j 装配、持久化 entity/mapper、Qdrant 写入
 │   │   ├── knowledge/ state/ config/ common/ observability/ project/
 │   │   └── resources/            application.yml · schema.sql · mapper
-│   ├── embedding-sidecar/        本地嵌入 sidecar（Node + @huggingface/transformers，768 维）
 │   ├── docs/                     架构模型（C4/Structurizr/DOT）与企业级升级计划
 │   ├── e2e_browser.py            Playwright 真浏览器端到端脚本
 │   └── README.md                 后端详细设计文档
@@ -55,15 +54,17 @@
 | `AI_BASE_URL` / `AI_MODEL` | 可选，默认 `https://api.agnes-ai.cn/v1` / `agnes-2.5-flash` |
 | `MYSQL_USER` / `MYSQL_PASSWORD` | 必填，本地 MySQL 8 账号（先执行 `server-java/src/main/resources/schema.sql`） |
 | `STORAGE_MODE` | `mysql`（默认）或 `json` |
-| `QDRANT_HOST` / `QDRANT_GRPC_PORT` / `QDRANT_COLLECTION` | RAG 向量库，默认 `127.0.0.1 / 6334 / learning_chunks` |
+| `QDRANT_HOST` / `QDRANT_GRPC_PORT` / `QDRANT_COLLECTION` | RAG 向量库，默认 `127.0.0.1 / 6334 / learning_chunks_bge` |
 | `APP_KB_ROOT` / `APP_DATA_DIR` / `APP_CLIENT_DIST` | 知识库根目录、数据目录、前端产物目录 |
 
 ### 2. 依赖服务
 
 ```bash
 docker run -d -p 6333:6333 -p 6334:6334 qdrant/qdrant:v1.12.4   # RAG 向量库（可选）
-ollama serve && ollama pull nomic-embed-text                     # 本地嵌入（可选，768 维）
+ollama serve && ollama pull bge-m3                               # 本地嵌入（可选，1024 维，中文/多语优化）
 ```
+
+索引重建：`POST /api/rag/reindex?limit=0` 全量扫描知识库并写入 `QDRANT_COLLECTION`；换嵌入模型（维度变化）需要换新 collection 后重建。
 
 ### 3. 启动后端
 

@@ -35,7 +35,7 @@ public class QdrantPointWriter {
     public QdrantPointWriter(
             @Value("${app.vector.qdrant-host:127.0.0.1}") String host,
             @Value("${app.vector.qdrant-port:6333}") int restPort,
-            @Value("${app.vector.collection:learning_chunks}") String collection) {
+            @Value("${app.vector.collection:learning_chunks_bge}") String collection) {
         this.base = "http://" + host + ":" + restPort;
         this.collection = collection;
     }

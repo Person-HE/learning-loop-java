@@ -1,7 +1,7 @@
 package com.closeloop.web;
 
 import com.closeloop.application.rag.RagService;
-import com.closeloop.infrastructure.ai.KnowNomicEmbeddingModel;
+import com.closeloop.infrastructure.ai.OllamaBgeEmbeddingModel;
 import com.closeloop.knowledge.KbService;
 import com.closeloop.knowledge.KnowledgeBase;
 import com.closeloop.state.model.Kp;
@@ -43,7 +43,7 @@ public class RagController {
         Map<String, Object> out = new LinkedHashMap<>();
         out.put("q", q);
         out.put("ms", (System.nanoTime() - t0) / 1_000_000);
-        out.put("model", KnowNomicEmbeddingModel.MODEL_ID);
+        out.put("model", OllamaBgeEmbeddingModel.MODEL_ID);
         out.put("store", "qdrant");
         out.put("hits", hits);
         return out;

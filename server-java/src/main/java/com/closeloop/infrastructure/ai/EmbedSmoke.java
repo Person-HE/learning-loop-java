@@ -12,7 +12,7 @@ import java.time.Duration;
 import java.util.List;
 
 /**
- * 嵌入自检：LangChain4j 调用 Know 同源 nomic-embed-text。
+ * 嵌入自检：LangChain4j 调用本机 Ollama bge-m3。
  * 模型文件已复制到 server-java/models/；推理走本机 Ollama 同款权重。
  * 运行：java -cp target/classes com.closeloop.infrastructure.ai.EmbedSmoke
  */
@@ -29,7 +29,7 @@ public final class EmbedSmoke {
 
         EmbeddingModel model = OllamaEmbeddingModel.builder()
                 .baseUrl("http://127.0.0.1:11434")
-                .modelName("nomic-embed-text")
+                .modelName("bge-m3")
                 .timeout(Duration.ofSeconds(30))
                 .build();
 
@@ -39,7 +39,7 @@ public final class EmbedSmoke {
         double n = 0;
         for (float x : v) n += x * x;
         System.out.println("dim=" + v.length + " norm=" + Math.sqrt(n));
-        if (v.length != 768) {
+        if (v.length != OllamaBgeEmbeddingModel.DIM) {
             System.exit(2);
         }
     }

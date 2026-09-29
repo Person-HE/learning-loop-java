@@ -1,6 +1,6 @@
 package com.closeloop.application.rag;
 
-import com.closeloop.infrastructure.ai.KnowNomicEmbeddingModel;
+import com.closeloop.infrastructure.ai.OllamaBgeEmbeddingModel;
 import com.closeloop.infrastructure.rag.QdrantPointWriter;
 import dev.langchain4j.data.document.Metadata;
 import dev.langchain4j.data.embedding.Embedding;
@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * RAG：切块 → EmbeddingModel(nomic-768) → EmbeddingStore(Qdrant) → TopK 给 LLM。
+ * RAG：切块 → EmbeddingModel(bge-m3-1024) → EmbeddingStore(Qdrant) → TopK 给 LLM。
  * 禁止把整篇文件直接塞上下文当作 RAG。
  */
 @Service
@@ -38,7 +38,7 @@ public class RagService {
     private final EmbeddingStore<TextSegment> store;
     private final com.closeloop.infrastructure.rag.QdrantPointWriter writer;
 
-    public RagService(KnowNomicEmbeddingModel embeddingModel, EmbeddingStore<TextSegment> store,
+    public RagService(OllamaBgeEmbeddingModel embeddingModel, EmbeddingStore<TextSegment> store,
                       com.closeloop.infrastructure.rag.QdrantPointWriter writer) {
         this.embeddingModel = embeddingModel;
         this.store = store;
@@ -89,7 +89,7 @@ public class RagService {
     public IndexResult indexChunks(String docId, List<Chunk> chunks) {
         if (chunks.isEmpty()) return new IndexResult(docId, 0, true);
         try {
-            writer.ensureCollection(KnowNomicEmbeddingModel.DIM);
+            writer.ensureCollection(OllamaBgeEmbeddingModel.DIM);
             List<QdrantPointWriter.Point> points = new ArrayList<>(chunks.size());
             for (Chunk c : chunks) {
                 List<TextSegment> one = List.of(TextSegment.from(c.text()));
